@@ -9,6 +9,7 @@ A RESTful Note Taking application built with ExpressJS, Sequelize, MySQL, and Re
 - User Registration: Sign up new users with username and password.
 - User Authentication: User login with token-based authentication.
 - CRUD Operations for Notes: Create, simple read, advanced search, update, and delete notes associated with users.
+- Input Validation: ensuring that the user-input data meets the desired format and is within sensible constraints.
 - Redis Caching: Improves performance by caching frequently accessed notes.
 - Design Patterns: Implements Singleton for logs and Redis instance and Factory pattern for note creation.
 - Dockerized Environment: Easily deployable using Docker and Docker Compose.
@@ -22,7 +23,15 @@ A RESTful Note Taking application built with ExpressJS, Sequelize, MySQL, and Re
 
 ## Getting Started 
 -  Clone the Repository and navigate to the project directory
+```bash
+  git clone https://github.com/kusai99/note-taking-app.git
+  cd note-taking-app
+ ```
 
+-  Install npm dependencies 
+```bash
+  npm install
+ ```
 - Create a .env file in the root directory with the following environment variables:
   
     >DB_HOST=db
