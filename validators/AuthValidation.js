@@ -1,5 +1,4 @@
 const { body } = require("express-validator");
-
 const AuthValidation = {
   register: [
     body("username")

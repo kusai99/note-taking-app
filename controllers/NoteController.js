@@ -2,6 +2,7 @@ const NoteService = require("../services/NoteService");
 const logger = require("../utils/Logger");
 const { validationResult } = require("express-validator");
 const NoteValidation = require("../validators/NoteValidation");
+const validationErrorHandler = require("../validators/ValidationErrorHandler");
 
 const NoteController = {
   // Get all the notes of the authenticated user
@@ -80,13 +81,8 @@ const NoteController = {
   // Create a new note and invalidate the notes cache
   createNote: [
     ...NoteValidation.createOrUpdateNoteValidation(),
+    validationErrorHandler,
     async (req, res) => {
-      // Validation check
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-
       const noteData = {
         noteType: req.body.noteType,
         title: req.body.title,
@@ -98,9 +94,12 @@ const NoteController = {
         logger.log("Creating note: " + JSON.stringify(noteData));
         const note = await NoteService.createNote(noteData);
         return res.status(201).json(note);
-      } catch (err) {
-        logger.log("Error creating note: " + err.message);
-        return res.status(400).json({ error: err.message });
+      } catch (error) {
+        if (error.name === "SequelizeUniqueConstraintError") {
+          return res.status(409).json({ error: error.message });
+        }
+        logger.log("Error creating note: " + error.message);
+        return res.status(500).json({ error: error.message });
       }
     },
   ],
@@ -109,13 +108,8 @@ const NoteController = {
   updateNote: [
     NoteValidation.validateNoteId(),
     ...NoteValidation.createOrUpdateNoteValidation(),
+    validationErrorHandler,
     async (req, res) => {
-      // Validation check
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-
       try {
         const existingNote = await NoteService.getNoteById(
           req.params.id,
@@ -141,7 +135,10 @@ const NoteController = {
         logger.log(
           "Error updating note with ID " + req.params.id + ": " + error.message
         );
-        res.status(400).json({ error: error.message });
+        if (error.name === "SequelizeUniqueConstraintError") {
+          return res.status(409).json({ error: error.message });
+        }
+        res.status(500).json({ error: error.message });
       }
     },
   ],
@@ -160,12 +157,12 @@ const NoteController = {
         }
 
         await NoteService.deleteNote(req.params.id, req.user.userId);
-        res.json({ message: "Note deleted successfully" });
+        res.status(204).send();
       } catch (error) {
         logger.log(
           "Error deleting note with ID " + req.params.id + ": " + error.message
         );
-        res.status(400).json({ error: error.message });
+        res.status(500).json({ error: error.message });
       }
     },
   ],
